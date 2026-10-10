@@ -9,7 +9,7 @@ Built for an "invisible AI" hackathon: there is no prompt box and nothing to upl
 1. Reads your university timetable (`.ics`).
 2. Watches your Downloads folder. When you download a PDF from the university course site, it reads it and works out which module and week it is for. File names do not matter.
 3. Files the PDF in a tidy folder: `~/Documents/QMUL/ECS640U Big Data Processing/Week 04 - <topic>.pdf`.
-4. Writes a one-page pre-lecture brief and 8 to 10 flashcards, each with the slide it came from.
+4. Writes a one-page pre-lecture brief and 8 to 10 flashcards. Each card can show the slide it came from.
 5. Shows them on a Today page next to your next lecture, and sends a desktop notification.
 6. Keeps every earlier week's brief and flashcards, per module.
 

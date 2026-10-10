@@ -34,15 +34,19 @@ def _wait_until_complete(path: Path) -> bool:
     return False
 
 
-def start(on_new_pdf: Callable[[Path], None]) -> None:
+def start(on_new_pdf: Callable[[Path], None], every_ten_minutes: Callable[[], None]) -> None:
     """Call on_new_pdf for every PDF, zip or folder that appears after the app starts.
 
     Things already in the folder are ignored, so old downloads are never touched.
     """
     def loop() -> None:
         seen = _items(config.WATCH_DIR)
+        last_tick = time.time()
         while True:
             time.sleep(1)
+            if time.time() - last_tick > 600:
+                last_tick = time.time()
+                every_ten_minutes()
             try:
                 current = _items(config.WATCH_DIR)
             except OSError:

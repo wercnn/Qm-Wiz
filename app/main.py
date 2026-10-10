@@ -4,11 +4,12 @@ Run with:  uvicorn app.main:app
 """
 from __future__ import annotations
 
+import io
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -28,7 +29,10 @@ def now() -> datetime:
 
 @app.on_event("startup")
 def start_watching() -> None:
-    watcher.start(lambda path: prep.process_new(path, lectures, now()))
+    watcher.start(
+        lambda path: prep.process_new(path, lectures, now()),
+        lambda: prep.retry_waiting(lectures, now()),
+    )
     prep.log(f"Watching {str(config.WATCH_DIR).replace(str(Path.home()), '~')} for new slides.")
 
 
@@ -75,6 +79,7 @@ def today(show: str | None = None) -> dict:
         ],
         "upcoming": [_describe(lec, with_prep=False) for lec in week],
         "history": [_describe(lec, with_prep=False) for lec in prepared],
+        "notice": prep.notice(),
         "activity": prep.activity[-8:],
     }
 
@@ -95,6 +100,38 @@ def set_clock(request: ClockRequest) -> dict:
     else:
         clock_shift = timedelta(0)
     return {"now": now().isoformat()}
+
+
+def _slides_path(module: str, date: str) -> Path:
+    """The filed slide PDF for a lecture."""
+    lecture = next((lec for lec in lectures if lec.module == module and lec.date == date), None)
+    saved = prep.load_prep(lecture) if lecture else None
+    path = Path(saved["slides_file"]).expanduser().resolve() if saved else None
+    # Only ever serve files from the slide library.
+    if not path or not path.is_file() or config.LIBRARY_DIR.resolve() not in path.parents:
+        raise HTTPException(404, "No slides filed for this lecture.")
+    return path
+
+
+@app.get("/api/slides/{module}/{date}")
+def slides(module: str, date: str) -> FileResponse:
+    """The whole slide deck for a lecture."""
+    return FileResponse(
+        _slides_path(module, date), media_type="application/pdf", content_disposition_type="inline"
+    )
+
+
+@app.get("/api/slides/{module}/{date}/{page}.png")
+def slide_image(module: str, date: str, page: int) -> Response:
+    """One slide as a picture, so a flashcard can show the slide it came from."""
+    import pypdfium2
+
+    deck = pypdfium2.PdfDocument(str(_slides_path(module, date)))
+    if not 1 <= page <= len(deck):
+        raise HTTPException(404, "No such slide.")
+    picture = io.BytesIO()
+    deck[page - 1].render(scale=1.6).to_pil().save(picture, "PNG")
+    return Response(picture.getvalue(), media_type="image/png", headers={"Cache-Control": "max-age=3600"})
 
 
 @app.get("/")

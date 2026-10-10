@@ -20,6 +20,24 @@ from .timetable import Lecture, modules, next_lecture
 activity: list[dict] = []
 # Lectures being worked on right now, as "<module>/<date>".
 in_progress: set[str] = set()
+# Files that could not be read because the free model requests ran out. Tried again later.
+waiting: set[Path] = set()
+
+OUT_OF_REQUESTS = ("Out of free AI requests for now. New slides stay in Downloads "
+                   "and are prepared automatically when requests are available again.")
+
+
+def notice() -> str | None:
+    """Message for the top of the Today page, or None when all is well."""
+    return OUT_OF_REQUESTS if waiting else None
+
+
+def retry_waiting(lectures: list[Lecture], now: datetime) -> None:
+    """Have another go at files that hit the request limit."""
+    for path in sorted(waiting):
+        waiting.discard(path)
+        if path.exists():
+            process_new(path, lectures, now)
 
 
 def log(text: str, now: datetime | None = None) -> None:
@@ -225,6 +243,9 @@ def process_pdf(
         log(f"Brief and {len(prep['cards'])} flashcards ready ({time.time() - started:.0f}s).", now)
         _notify(f"{lecture.module} brief is ready",
                 f"{prep['topic']}. {lecture.start.strftime('%a %H:%M')}, {lecture.room}.")
+    except model.QuotaError:
+        waiting.add(pdf_path)
+        log(f"Out of free AI requests. {pdf_path.name} will be prepared later.", now)
     except Exception as error:
         log(f"Could not prepare {pdf_path.name}: {str(error)[:160]}", now)
     finally:
@@ -262,8 +283,12 @@ def process_folder(folder: Path, lectures: list[Lecture], now: datetime) -> None
             for n, lec in enumerate(module_lectures, 1) if (saved := load_prep(lec))
         ]
         order = model.plan_order(title, decks, "\n".join(syllabus[:3]), len(module_lectures), placed)
+    except model.QuotaError:
+        waiting.add(folder)
+        log(f"Out of free AI requests. {folder.name} will be prepared later.", now)
+        return
     except Exception as error:
-        log(f"Could not work out the weeks for {folder.name}: {error}", now)
+        log(f"Could not work out the weeks for {folder.name}: {str(error)[:160]}", now)
         return
 
     by_name = {pdf.name: pdf for pdf in pdfs}

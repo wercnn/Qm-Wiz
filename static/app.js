@@ -6,6 +6,9 @@ let cards = [];
 let cardIndex = 0;
 let flipped = false;
 let cardsFor = null;   // which brief the cards belong to
+let slidesFor = null;  // lecture id whose PDF the cards point into
+let slideOpen = false;
+let slideShown = null;
 let jumpFilled = false;
 let lastDrawn = "";
 
@@ -33,6 +36,26 @@ function drawCard() {
     node("small", flipped ? `From slide ${card.slide}. Click to see the question.` : "Click to see the answer."),
   );
   $("card-count").textContent = `${cardIndex + 1} of ${cards.length}`;
+  $("show-slide").textContent = slideOpen ? "Hide slide" : `Show slide ${card.slide}`;
+  drawSlide();
+}
+
+function drawSlide() {
+  // The PDF page the current card came from, shown under the card.
+  const box = $("slide");
+  box.hidden = !slideOpen;
+  const wanted = slideOpen ? `${slidesFor}#${cards[cardIndex].slide}` : null;
+  if (wanted === slideShown) return; // flipping a card must not reload the PDF
+  slideShown = wanted;
+  if (!slideOpen) { box.replaceChildren(); return; }
+  const page = cards[cardIndex].slide;
+  const picture = document.createElement("img");
+  picture.alt = `Slide ${page}`;
+  picture.src = `/api/slides/${slidesFor}/${page}.png`;
+  const link = node("a", "Open the full slide deck");
+  link.href = `/api/slides/${slidesFor}#page=${page}`;
+  link.target = "_blank";
+  box.replaceChildren(picture, link);
 }
 
 function drawLecture(lec, in24h) {
@@ -80,6 +103,8 @@ function drawLecture(lec, in24h) {
   if (cardsFor !== key) {
     cardsFor = key;
     cards = prep.cards;
+    slidesFor = lec.id;
+    slideOpen = false;
     cardIndex = 0;
     flipped = false;
     drawCard();
@@ -154,12 +179,15 @@ async function refresh() {
     return li;
   });
 
+  $("notice").hidden = !data.notice;
+  $("notice").textContent = data.notice || "";
   drawHistory(data);
 
   fill($("activity"), [...data.activity].reverse(), (item) => node("li", `${item.time}  ${item.text}`));
 }
 
 $("card").onclick = () => { flipped = !flipped; drawCard(); };
+$("show-slide").onclick = () => { slideOpen = !slideOpen; drawCard(); };
 $("next").onclick = () => { cardIndex = (cardIndex + 1) % cards.length; flipped = false; drawCard(); };
 $("prev").onclick = () => { cardIndex = (cardIndex - 1 + cards.length) % cards.length; flipped = false; drawCard(); };
 

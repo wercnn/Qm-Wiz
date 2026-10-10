@@ -89,4 +89,9 @@ dd { margin: 0; color: #33332f; }
 .card.answer { background: #eef3f8; }
 .card small { display: block; margin-top: 14px; font-size: 12px; color: var(--muted); }
 .card-nav { display: flex; gap: 8px; margin-top: 10px; }
+#show-slide { margin-left: auto; }
+#slide { margin-top: 12px; }
+#slide img { display: block; width: 100%; border: 1px solid var(--line); border-radius: 8px; }
+#slide a { display: inline-block; margin-top: 6px; font-size: 13px; color: var(--accent); }
+.notice { max-width: 1000px; margin: 16px auto 0; padding: 10px 14px; border: 1px solid var(--waiting); border-radius: 8px; color: var(--waiting); background: #fbf6e6; font-size: 14px; }
 .card-nav button { font: inherit; padding: 6px 14px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); cursor: pointer; }

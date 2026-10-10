@@ -7,6 +7,7 @@ the same return shapes.
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -78,8 +79,13 @@ def extract_text(pdf_path: Path) -> list[str]:
         return []
 
 
-# Models that ran out of quota or were unavailable since the app started.
-_skip: set[str] = set()
+class QuotaError(RuntimeError):
+    """Every model is out of free requests or unavailable right now."""
+
+
+# Models that ran out of quota or were unavailable, and when to try them again.
+_skip: dict[str, float] = {}
+RETRY_AFTER = 30 * 60
 
 
 def _generate(contents: list, schema: type[BaseModel], temperature: float, client=None) -> str:
@@ -93,15 +99,15 @@ def _generate(contents: list, schema: type[BaseModel], temperature: float, clien
     )
     names = [config.GEMINI_MODEL, *config.GEMINI_FALLBACK_MODELS]
     last_error: Exception | None = None
-    for name in [n for n in dict.fromkeys(names) if n not in _skip]:
+    for name in [n for n in dict.fromkeys(names) if _skip.get(n, 0) < time.time()]:
         try:
             return client.models.generate_content(model=name, contents=contents, config=settings).text
         except errors.APIError as error:
             if error.code not in (404, 429, 500, 503):
                 raise
-            _skip.add(name)
+            _skip[name] = time.time() + RETRY_AFTER
             last_error = error
-    raise RuntimeError(f"No Gemini model is available right now ({last_error}).")
+    raise QuotaError(f"No Gemini model is available right now ({str(last_error)[:120]}).")
 
 
 def _ask_gemini(prompt: str, pdf_path: Path) -> Prep:
@@ -115,7 +121,7 @@ def _ask_gemini(prompt: str, pdf_path: Path) -> Prep:
         else:
             pdf = types.Part.from_bytes(data=pdf_path.read_bytes(), mime_type="application/pdf")
         reply = _generate([pdf, prompt], Prep, 0.3, client)
-    except RuntimeError:
+    except QuotaError:
         raise
     except Exception:
         # Fallback: send the extracted text, page by page, instead of the PDF itself.
