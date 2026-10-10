@@ -2,69 +2,78 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>QM Wiz: Today</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f2f5">
+<title>QM Wiz</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header>
-  <div>
-    <h1>Today</h1>
-    <p id="clock" class="muted"></p>
-  </div>
-  <div class="demo">
-    <label for="jump">Demo clock</label>
-    <select id="jump"><option value="">Real time</option></select>
-  </div>
-</header>
+<div class="app">
+  <p id="notice" class="notice" hidden></p>
 
-<p id="notice" class="notice" hidden></p>
+  <!-- The lecture being shown. Always on top. -->
+  <header id="lecture" class="hero"></header>
 
-<main>
-  <section id="lecture" class="panel"></section>
-
-  <section id="brief" hidden>
-    <div class="panel">
-      <h3>Before you go in</h3>
-      <p id="overview"></p>
-      <h4>What it covers</h4>
-      <ul id="covers"></ul>
-      <h4>Key terms</h4>
-      <dl id="terms"></dl>
-      <h4>Link to last week</h4>
-      <p id="link"></p>
-      <h4>Questions to think about</h4>
-      <ol id="questions"></ol>
+  <!-- Brief -->
+  <section id="view-brief" class="view">
+    <div id="waiting" class="empty" hidden></div>
+    <div id="brief" hidden>
+      <p id="overview" class="lead"></p>
+      <div class="block">
+        <h2>What it covers</h2>
+        <ul id="covers" class="covers"></ul>
+      </div>
+      <div class="block">
+        <h2>Key terms</h2>
+        <dl id="terms" class="terms"></dl>
+      </div>
+      <div class="block">
+        <h2>Link to last week</h2>
+        <p id="link"></p>
+      </div>
+      <div class="block">
+        <h2>Questions to think about</h2>
+        <ol id="questions" class="questions"></ol>
+      </div>
     </div>
+  </section>
 
-    <div class="panel">
-      <h3>Flashcards <span id="card-count" class="muted"></span></h3>
+  <!-- Flashcards -->
+  <section id="view-cards" class="view" hidden>
+    <div id="no-cards" class="empty" hidden>Flashcards appear here when the slides are out.</div>
+    <div id="deck" hidden>
+      <div id="progress" class="progress"></div>
       <button id="card" class="card" type="button" aria-live="polite"></button>
       <div class="card-nav">
-        <button id="prev" type="button">Previous</button>
-        <button id="next" type="button">Next</button>
-        <button id="show-slide" type="button"></button>
+        <button id="prev" type="button" aria-label="Previous card">←</button>
+        <button id="show-slide" type="button" class="slide-toggle"></button>
+        <button id="next" type="button" aria-label="Next card">→</button>
       </div>
       <div id="slide" hidden></div>
     </div>
   </section>
 
-  <aside>
-    <div class="panel">
-      <h3>Next 7 days</h3>
-      <ul id="upcoming" class="list"></ul>
-    </div>
-    <div class="panel">
-      <h3>All weeks</h3>
-      <select id="history-module" aria-label="Module"></select>
-      <ul id="history" class="list"></ul>
-    </div>
-    <div class="panel">
-      <h3>What QM Wiz did</h3>
-      <ul id="activity" class="list small"></ul>
-    </div>
-  </aside>
-</main>
+  <!-- All lectures -->
+  <section id="view-weeks" class="view" hidden>
+    <h2>Next 7 days</h2>
+    <ul id="upcoming" class="rows"></ul>
+    <h2>All weeks</h2>
+    <div id="history-modules" class="pills"></div>
+    <ul id="history" class="rows"></ul>
+    <h2>What QM Wiz did</h2>
+    <ul id="activity" class="activity"></ul>
+    <label class="demo">Demo clock
+      <select id="jump"><option value="">Real time</option></select>
+    </label>
+    <p id="clock" class="clock"></p>
+  </section>
+</div>
+
+<nav class="tabs" aria-label="Sections">
+  <button type="button" data-view="brief" class="on">Brief</button>
+  <button type="button" data-view="cards">Cards</button>
+  <button type="button" data-view="weeks">Weeks</button>
+</nav>
 
 <script src="/static/app.js"></script>
 </body>

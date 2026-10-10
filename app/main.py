@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config, prep, watcher
-from .timetable import Lecture, load_lectures
+from .timetable import Lecture, load_lectures, modules
 
 app = FastAPI(title="QM Wiz")
 lectures = load_lectures()
@@ -79,6 +79,7 @@ def today(show: str | None = None) -> dict:
         ],
         "upcoming": [_describe(lec, with_prep=False) for lec in week],
         "history": [_describe(lec, with_prep=False) for lec in prepared],
+        "modules": modules(lectures),
         "notice": prep.notice(),
         "activity": prep.activity[-8:],
     }
