@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QM Wiz: Today</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>Today</h1>
+    <p id="clock" class="muted"></p>
+  </div>
+  <div class="demo">
+    <label for="jump">Demo clock</label>
+    <select id="jump"><option value="">Real time</option></select>
+  </div>
+</header>
+
+<main>
+  <section id="lecture" class="panel"></section>
+
+  <section id="brief" hidden>
+    <div class="panel">
+      <h3>Before you go in</h3>
+      <p id="overview"></p>
+      <h4>What it covers</h4>
+      <ul id="covers"></ul>
+      <h4>Key terms</h4>
+      <dl id="terms"></dl>
+      <h4>Link to last week</h4>
+      <p id="link"></p>
+      <h4>Questions to think about</h4>
+      <ol id="questions"></ol>
+    </div>
+
+    <div class="panel">
+      <h3>Flashcards <span id="card-count" class="muted"></span></h3>
+      <button id="card" class="card" type="button" aria-live="polite"></button>
+      <div class="card-nav">
+        <button id="prev" type="button">Previous</button>
+        <button id="next" type="button">Next</button>
+      </div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="panel">
+      <h3>Next 7 days</h3>
+      <ul id="upcoming" class="list"></ul>
+    </div>
+    <div class="panel">
+      <h3>All weeks</h3>
+      <select id="history-module" aria-label="Module"></select>
+      <ul id="history" class="list"></ul>
+    </div>
+    <div class="panel">
+      <h3>What QM Wiz did</h3>
+      <ul id="activity" class="list small"></ul>
+    </div>
+  </aside>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
